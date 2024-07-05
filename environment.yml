@@ -1,0 +1,25 @@
+name: limp  # Name of your conda environment
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.8  # Specify the Python version
+  - numpy   
+  - spot    
+  - pip         
+  - pip:
+      - open3d   
+      - networkx 
+      - pillow
+      - matplotlib
+      - transformers
+      - torch
+      - torchvision
+      - tqdm
+      - ipykernel
+      - timm==0.9.10
+      - openai==0.28
+      - pqdict
+      - ipywidgets
+      - ipympl
+      - sympy
