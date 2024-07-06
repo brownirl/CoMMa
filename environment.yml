@@ -3,7 +3,7 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python=3.8  # Specify the Python version
+  - python=3.9  # Specify the Python version
   - numpy   
   - spot    
   - pip         

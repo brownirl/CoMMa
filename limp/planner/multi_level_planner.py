@@ -387,7 +387,7 @@ def get_step_action_type(values, encoding_map):
                 return step_action_type, actual_predicate, allowed_predicate
     return step_action_type,actual_predicate, allowed_predicate
 
-def save_progressive_planning_step_artifacts(progressive_plan_step_title, tmp_fldr, augmented_point_cloud=None, all_truth_valuemap=None, goal_points_info=None, obstacle_map=[], obstacle_map_title=None, sampled_obstacle_map_title=None, grouped_sampled_goals=None, pred_grouped_goal_points =None,motion_plan_info=None,show_color_bar=True):
+def save_progressive_planning_step_artifacts(progressive_plan_step_title, tmp_fldr, augmented_point_cloud=None, all_truth_valuemap=None, goal_points_info=None, obstacle_map=[], obstacle_map_title=None, sampled_obstacle_map_title=None, grouped_sampled_goals=None, pred_grouped_goal_points =None,motion_plan_info=None,show_color_bar=True, minimal_save=True):
     #create folder for saving artifacts in tmp_fldr
     progressive_plan_step_fldr = tmp_fldr + progressive_plan_step_title + "/"
     if not os.path.exists(progressive_plan_step_fldr):
@@ -395,33 +395,33 @@ def save_progressive_planning_step_artifacts(progressive_plan_step_title, tmp_fl
     
     #save augmented point cloud with colors
     if augmented_point_cloud!=None:
-        color_augmented_pcd, topless_pointcloud = color_augment_value_map(augmented_point_cloud, all_truth_valuemap, use_original_colors=True)
+        color_augmented_pcd = color_augment_value_map(augmented_point_cloud, all_truth_valuemap, use_original_colors=True)
         o3d.io.write_point_cloud(progressive_plan_step_fldr+"tpsm.pcd", color_augmented_pcd)
-        o3d.io.write_point_cloud(progressive_plan_step_fldr+"tpsm_topless.pcd", topless_pointcloud)
 
     #save value map
-    if all_truth_valuemap!=None:
+    if all_truth_valuemap!=None and minimal_save==False:
         np.save(progressive_plan_step_fldr+"value_map.npy", all_truth_valuemap)
 
     #save goal points
-    if goal_points_info!=None:
+    if goal_points_info!=None and minimal_save==False:
         np.save(progressive_plan_step_fldr+"goal_points_info.npy", goal_points_info)
 
     #save obstacle map 
     if len(obstacle_map)!=0:
-        np.save(progressive_plan_step_fldr+"obstacle_map.npy",obstacle_map)
+        if minimal_save==False:
+            np.save(progressive_plan_step_fldr+"obstacle_map.npy",obstacle_map)
 
         #  Visualize obstacle map with all goal points
         fig = visualize_obstacle_map(obstacle_map, obstacle_map_title,show_color_bar)
         fig.savefig(progressive_plan_step_fldr+"obstacle_map_img.png")  # Save the figure as an image
 
-        # if grouped_sampled_goals != None:
-        #     # Also visualize obstacle map with just sampled goals
-        #     fig2 = fmt_utils.sampled_visualize_obstacle_map(obstacle_map, grouped_sampled_goals, sampled_obstacle_map_title,show_color_bar)
-        #     fig2.savefig(progressive_plan_step_fldr+"sampled_goals_obstacle_map_img.png")  # Save the figure as an image
+        if grouped_sampled_goals != None and minimal_save==False:
+            # Also visualize obstacle map with just sampled goals
+            fig2 = fmt_utils.sampled_visualize_obstacle_map(obstacle_map, grouped_sampled_goals, sampled_obstacle_map_title,show_color_bar)
+            fig2.savefig(progressive_plan_step_fldr+"sampled_goals_obstacle_map_img.png")  # Save the figure as an image
     
     #save obstacle map grouped goal points
-    if pred_grouped_goal_points!=None:
+    if pred_grouped_goal_points!=None and minimal_save==False:
         np.save(progressive_plan_step_fldr+"pred_grouped_goal_points.npy",pred_grouped_goal_points)
 
     #save motion plan info
@@ -853,20 +853,7 @@ def color_augment_value_map(point_cloud, value_map, use_original_colors=False, h
 
     # Update the point cloud colors
     point_cloud.colors = o3d.utility.Vector3dVector(colors)
-
-    # Filter out points that are outside the height limits to remove floor and roof points
-    #bottom: h_min || #top: h_max
-    points = np.asarray(point_cloud.points)
-    height_mask = (points[:, 2] > h_min) & (points[:, 2] < h_max)
-    
-    points_filtered = points[height_mask]
-
-    #create new point cloud with filtered points
-    filtered_pointcloud = o3d.geometry.PointCloud()
-    filtered_pointcloud.points = o3d.utility.Vector3dVector(points_filtered)
-    filtered_pointcloud.colors = o3d.utility.Vector3dVector(colors[height_mask])
-
-    return point_cloud, filtered_pointcloud
+    return point_cloud
 
 #function to convert grid coordinates back to point world coordinates
 def grid_to_world(grid_coords, min_bound, resolution):

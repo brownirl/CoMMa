@@ -7,11 +7,12 @@ This is the code base for the paper **"Verifiably Following Complex Robot Instru
 * [Link to project website with robot demonstration videos](https://robotlimp.github.io/) 
 
 ## Installation
-* Create conda env and install relevant packages: ```conda env create -f environment.yml```
+* Create conda environment and install relevant packages: ```conda env create -f environment.yml```
 * Activate your conda environment: ```conda activate limp```
-* Follow the instructions [here](https://github.com/benedictquartey/open-spatial-grounding) to install our Open Spatial Grounding (OSG) library.
-* [OR] Copy this [osg folder](https://github.com/benedictquartey/open-spatial-grounding/tree/main/osg) into this root directory
-* Obtain an [openai api key](https://platform.openai.com/api-keys) and add it to your system variables.
+* Install the [Open Spatial Grounding Library (OSG)](https://github.com/benedictquartey/open-spatial-grounding)
+  * In the ```limp``` conda environment install [Mobile SAM](https://github.com/ChaoningZhang/MobileSAM) or [Segment Anything](https://github.com/facebookresearch/segment-anything) as stated in OSG's installation instructions.
+  * Copy the [osg](https://github.com/benedictquartey/open-spatial-grounding/tree/main/osg) folder from the Open Spatial Grounding library and place it in this root directory.
+* Obtain an [Openai api key](https://platform.openai.com/api-keys) and add it to your system variables.
 
 ## Running Instructions
 * Grab sample data from [drive](https://)
