@@ -4,7 +4,7 @@
 This is the code base for the paper **"Verifiably Following Complex Robot Instructions with Foundation Models"**. We present a novel approach that leverages pre-trained foundation models and temporal logics to enable robots verifiably follow expressive and complex open ended instructions in real world environments without prebuilt semantic maps.
 
 * [Link to paper](https://arxiv.org/abs/2402.11498)
-* [Link to project website with robot demonstration videos](https://robotlimp.github.io/) 
+* [Link to project website with robot demonstration videos](https://benedictquartey.github.io/robotlimp/index.html) 
 
 ## Installation
 * Create conda environment and install relevant packages: ```conda env create -f environment.yml```
