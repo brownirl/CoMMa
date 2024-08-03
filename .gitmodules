@@ -1,0 +1,12 @@
+[submodule "./seeing_unseen/third_party/Detic"]
+	path = ./seeing_unseen/third_party/Detic
+	url = git@github.com:facebookresearch/Detic.git
+[submodule "./seeing_unseen/third_party/Inpaint-Anything"]
+	path = ./seeing_unseen/third_party/Inpaint-Anything
+	url = git@github.com:geekyutao/Inpaint-Anything.git
+[submodule "./seeing_unseen/third_party/LLaVA"]
+	path = ./seeing_unseen/third_party/LLaVA
+	url = git@github.com:haotian-liu/LLaVA.git
+[submodule "osg/segment_anything_2"]
+	path = osg/segment_anything_2
+	url = https://github.com/facebookresearch/segment-anything-2.git

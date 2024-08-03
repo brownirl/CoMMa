@@ -11,6 +11,7 @@ __pycache__/
 # model_checkpoints
 *.pth
 *.pt
+/osg/model_ckpts/
 
 # pointclouds
 *.pcd
@@ -139,5 +140,23 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+
+/demo_notebook.py
+
+
+# seeing unseen
+/seeing_unseen/data/
+/seeing_unseen/outputs/
+/seeing_unseen/glide_model_cache/
+/seeing_unseen/datadump/
+
+# seeing unseen Logs
+wandb/
+slurm_logs/
+
+environment.yml
+
+#data
+sample_data/
 
 .DS_Store
