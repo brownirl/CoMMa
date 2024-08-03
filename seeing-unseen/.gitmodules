@@ -1,0 +1,6 @@
+[submodule "seeing_unseen/third_party/Detic"]
+	path = seeing_unseen/third_party/Detic
+	url = git@github.com:facebookresearch/Detic.git
+[submodule "seeing_unseen/third_party/Inpaint-Anything"]
+	path = seeing_unseen/third_party/Inpaint-Anything
+	url = git@github.com:geekyutao/Inpaint-Anything.git
