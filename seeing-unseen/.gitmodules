@@ -4,3 +4,6 @@
 [submodule "seeing_unseen/third_party/Inpaint-Anything"]
 	path = seeing_unseen/third_party/Inpaint-Anything
 	url = git@github.com:geekyutao/Inpaint-Anything.git
+[submodule "seeing_unseen/third_party/LLaVA"]
+	path = seeing_unseen/third_party/LLaVA
+	url = git@github.com:haotian-liu/LLaVA.git

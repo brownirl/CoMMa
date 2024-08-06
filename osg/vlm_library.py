@@ -81,7 +81,7 @@ class vlm_library():
           return sam_predictor
      
      def load_sam2(self,ckpt_filenmae):
-          model_cfg = "./segment_anything_2/sam2_configs/sam2_hiera_t.yaml"
+          model_cfg = "sam2_hiera_t.yaml"
           predictor = SAM2ImagePredictor(build_sam2(model_cfg, ckpt_filenmae))
           return predictor
      
@@ -99,15 +99,28 @@ class vlm_library():
           self.seg_model.set_image(image) #get image embedding and retain copy in model
           sam_embedding = self.seg_model.get_image_embedding() #get image embedding
           boxes_xyxy = boxes #already in xyxy format
-          transformed_boxes = self.seg_model.transform.apply_boxes_torch(boxes_xyxy, image.shape[:2]).to(self.device )
+          
+          #SAM 2
+          if isinstance(self.seg_model, SAM2ImagePredictor):
+               masks, scores, logits = self.seg_model.predict( #batch prediction on all boxes
+                    point_coords = None,
+                    point_labels = None,
+                    box = boxes_xyxy,
+                    multimask_output = False,
+               )
 
-          masks, scores, logits = self.seg_model.predict_torch( #batch prediction on all boxes
-               point_coords = None,
-               point_labels = None,
-               boxes = transformed_boxes,
-               multimask_output = False,
-          )
-          return masks,sam_embedding
+               masks = torch.tensor(masks)
+          #SAM and Mobile SAM
+          else:
+               transformed_boxes = self.seg_model.transform.apply_boxes_torch(boxes_xyxy, image.shape[:2]).to(self.device )
+
+               masks, scores, logits = self.seg_model.predict_torch( #batch prediction on all boxes
+                    point_coords = None,
+                    point_labels = None,
+                    boxes = transformed_boxes,
+                    multimask_output = False,
+               )
+          return masks, sam_embedding
      
      def show_mask(self,mask, image, boxes_details,random_color=True,center_pixel=None):
           if random_color:
@@ -390,8 +403,11 @@ class vlm_library():
 
                     #get mask info
                     for i,mask in enumerate(masks):
-                         print(f"      Processing {labels[i]} mask")
+                         print(f"Processing {labels[i]} mask")
                          if use_segmentation:
+                              #SAM 2 conditional
+                              if mask.dim() == 2:
+                                   mask = mask.unsqueeze(0)
                               actual_mask = mask[0].cpu()
                               center_pixel, center_pixel_depth = get_center_pixel_depth(actual_mask,depth_data)
                               mask_pixel_coords,pixel_depths,average_depth=get_mask_pixels_depth(actual_mask,depth_data)
@@ -400,7 +416,7 @@ class vlm_library():
                               center_pixel, center_pixel_depth = get_bounding_box_center_depth(actual_mask,depth_data)
                               mask_pixel_coords,pixel_depths,average_depth=get_bounding_box_pixels_depth(actual_mask,depth_data)
                          
-                         print(f"         Mask {labels[i]}_{str(node_idx)}{obs_idx_to_alphabet[obs_idx]}_{i} || Original Center pixel: {center_pixel} || Center pixel depth: {center_pixel_depth}")
+                         print(f"Mask {labels[i]}_{str(node_idx)}{obs_idx_to_alphabet[obs_idx]}_{i} || Original Center pixel: {center_pixel} || Center pixel depth: {center_pixel_depth}")
                          center_pixel_depth=average_depth #Use average of mask depth with actual values as depth of center pixel || not just the actual center pixel depth
                          
                          ##Three step adaptive depth data approach 

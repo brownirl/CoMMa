@@ -159,4 +159,10 @@ environment.yml
 #data
 sample_data/
 
+#results
+/results/
+
+#debugging
+debug_nb.py
+
 .DS_Store

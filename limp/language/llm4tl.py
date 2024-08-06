@@ -6,6 +6,9 @@ import string
 import re
 import os
 
+
+openai.api_key = ""
+
 def generate_response_from_gpt4(system_prompt=None, user_prompt=None, messages_history=None, deterministic=False):
 	gpt_model = "gpt-4" # gpt-4 or gpt-4o
 	if messages_history == None:
