@@ -1,6 +1,6 @@
-[submodule "osg/segment_anything_2"]
-	path = osg/segment_anything_2
-	url = https://github.com/facebookresearch/segment-anything-2.git
 [submodule "seeing-unseen"]
 	path = seeing-unseen
 	url = https://github.com/Ram81/seeing-unseen.git
+[submodule "segment-anything-2"]
+	path = segment-anything-2
+	url = https://github.com/ahmedjaafar6/segment-anything-2.git
