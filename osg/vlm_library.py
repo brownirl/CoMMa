@@ -1,23 +1,26 @@
 import os
+import re
+import pdb
 import sys
 import time
 import torch
+import requests
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+from huggingface_hub import login
 from multiprocessing import Process
 import matplotlib.patches as patches
 from torchvision.ops import box_convert
+from osg.grounding_dino_1_5.gdino import GroundingDINOAPIWrapper, visualize
 from segment_anything import build_sam, SamPredictor
 from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
 from mobile_sam import sam_model_registry, SamPredictor
-from transformers import OwlViTProcessor, OwlViTForObjectDetection, Owlv2Processor, Owlv2ForObjectDetection
+from transformers import OwlViTProcessor, OwlViTForObjectDetection, Owlv2Processor, Owlv2ForObjectDetection, AutoProcessor, PaliGemmaForConditionalGeneration, BitsAndBytesConfig
 from osg.spatial_relationships import check_spatial_predicate_satisfaction
 from osg.utils.general_utils import get_center_pixel_depth, get_mask_pixels_depth, get_bounding_box_center_depth, get_bounding_box_pixels_depth, pixel_to_world_frame
-
-import pdb
 
 # import warnings
 # warnings.filterwarnings("ignore")
@@ -35,9 +38,12 @@ class vlm_library():
 
           if vl_model == "owl_vit": #Vision Transformer for Open-World Localization [Simple Open-Vocabulary Object Detection with Vision Transformers]
                self.vl_model, self.vl_processor = self.load_owl_vit()
-
           elif vl_model == "owl_v2": #Scaling Open-Vocabulary Object Detection
                self.vl_model, self.vl_processor = self.load_owl_v2()
+          elif vl_model == "pgemma":
+               self.vl_model, self.vl_processor = self.load_pgemma()
+          elif vl_model == "gdino15":
+               self.vl_model = self.load_gdino15()
           else:
                raise ValueError("Invalid model name")
           
@@ -57,7 +63,7 @@ class vlm_library():
 
           elif seg_model == "sam2":
                module_path = os.path.dirname(__file__)
-               sam_checkpoint = os.path.join(module_path, 'model_ckpts/sam2_hiera_tiny.pt')
+               sam_checkpoint = os.path.join(module_path, 'model_ckpts/sam2_hiera_base_plus.pt')
                self.seg_model = self.load_sam2(sam_checkpoint)
                print(f"Segmentation model: SAM2\n-------------------------------------------------")
           else:
@@ -73,6 +79,23 @@ class vlm_library():
           model = Owlv2ForObjectDetection.from_pretrained(model_name)
           processor = Owlv2Processor.from_pretrained(model_name)
           return model, processor  
+
+     def load_pgemma(self, model_name="google/paligemma-3b-pt-896"):
+          login(token="")
+
+          device = "cuda:0"
+          torch.cuda.empty_cache()
+          dtype = torch.bfloat16
+          quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16)
+          model = PaliGemmaForConditionalGeneration.from_pretrained(
+                              model_name, quantization_config=quantization_config
+                              ).eval()
+          processor = AutoProcessor.from_pretrained(model_name)
+          return model, processor
+     
+     def load_gdino15(self, token=""):
+          model = GroundingDINOAPIWrapper(token)
+          return model
      
      def load_sam(self,ckpt_filenmae):
           sam = build_sam(checkpoint=ckpt_filenmae)
@@ -81,7 +104,7 @@ class vlm_library():
           return sam_predictor
      
      def load_sam2(self,ckpt_filenmae):
-          model_cfg = "sam2_hiera_t.yaml"
+          model_cfg = "sam2_hiera_b+.yaml"
           predictor = SAM2ImagePredictor(build_sam2(model_cfg, ckpt_filenmae))
           return predictor
      
@@ -167,6 +190,34 @@ class vlm_library():
           """
           if self.vl_model_name == "owl_vit" or self.vl_model_name == "owl_v2":
                return self.label_observation_owl_vit(observation, propositions_to_ground, threshold)
+          elif self.vl_model_name == "pgemma":
+               return self.label_observation_pgemma(observation, propositions_to_ground, threshold)
+          elif self.vl_model_name == "gdino15":
+               return self.label_observation_gdino15(observation, propositions_to_ground, threshold)
+
+     def label_observation_pgemma(self, observation, propositions_to_ground, score_threshold=0.1):
+          prompt = "detect box"
+          model_inputs = self.vl_processor(text=prompt, images=observation, return_tensors="pt").to(self.vl_model.device)
+          input_len = model_inputs["input_ids"].shape[-1]
+
+          with torch.inference_mode():
+               generation = self.vl_model.generate(**model_inputs, max_new_tokens=100, do_sample=False)
+               generation = generation[0][input_len:]
+               decoded = self.vl_processor.decode(generation, skip_special_tokens=True)
+          
+          numbers = [int(match) for match in re.findall(r'\d{4}', decoded)]
+          draw = ImageDraw.Draw(observation)
+          draw.rectangle(numbers, outline="red", width=3)
+          observation.save("output_image_with_bbox.jpg")
+          # return torch.Tensor(bounds), labels, confidence
+
+     def label_observation_gdino15(self, observation, propositions_to_ground, score_threshold=0.1):
+          observation.save('obs.png')
+          prompts = dict(image="obs.png", prompt= '.'.join(propositions_to_ground))
+          results = self.vl_model.inference(prompts)
+          os.remove('obs.png')
+          bounds, labels, confidence = results['boxes'], results['categorys'], results['scores']
+          return torch.Tensor(bounds), labels, confidence
 
      def label_observation_owl_vit(self, observation, propositions_to_ground, score_threshold=0.1):
           inputs = self.vl_processor(text=propositions_to_ground, images=observation, return_tensors="pt")
@@ -191,7 +242,7 @@ class vlm_library():
           labels = [d['label'] for d in detected_propositions]
           confidence = [round(d['confidence'],2) for d in detected_propositions]
 
-          return torch.Tensor(bounds),labels,confidence
+          return torch.Tensor(bounds), labels, confidence
 
      def plot_boxes(self, image, boxes, labels, scores, plt_size=10,file_name="tmp.png"):
           """
