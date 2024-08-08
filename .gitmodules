@@ -4,3 +4,6 @@
 [submodule "osg/segment-anything-2"]
 	path = osg/segment-anything-2
 	url = https://github.com/ahmedjaafar6/segment-anything-2.git
+[submodule "osg/grounding-dino-1.5"]
+	path = osg/grounding-dino-1.5
+	url = https://github.com/IDEA-Research/Grounding-DINO-1.5-API.git
